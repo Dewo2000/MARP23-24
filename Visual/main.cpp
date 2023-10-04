@@ -18,6 +18,7 @@
 #include <queue>
 #include <climits>
 #include <cmath>
+#include "IndexPQ.h"
 using namespace std;
 
 
@@ -35,51 +36,39 @@ using namespace std;
 
 
 
+
 bool resuelveCaso() {
+   
+   // leer los datos de la entrada
+   int d,a,b;
+   cin >> d;
+   if (!std::cin)  // fin de la entrada
+      return false;
+   cin >> a >> b;
+   IndexPQ<int, greater<int>>pila9V(a);
+   IndexPQ<int, greater<int>>pila15V(b);
+   int horas;
+   for (int i = 0; i < a; i++) {
+       int h;
+       cin >> h;
+       pila9V.push(i, h);
+   }
+   for (int i = 0; i < b; i++) {
+       int h;
+       cin >> h;
+       pila15V.push(i, h);
+   }
+   for (int i = 0; i < d; i++) {
+       if (pila9V.top().prioridad > pila15V.top().prioridad) {
 
-    // leer los datos de la entrada
-    int n,p;
-    cin >> n;
-    if (n==0) //caso especial
-        return false;
-    cin >> p;
-    priority_queue<int> menor;
-    priority_queue<int , vector<int>, greater<int>> mayor;
-    vector<int> resultado;
-    menor.push(n);
-    for (int i = 0; i < p; i++) {
-        int e , e2;
-        cin >> e >> e2;
-        if (e < menor.top()) {
-            menor.push(e);
-        }
-        else {
-            mayor.push(e);
-        }
-        if (e2 < menor.top()) {
-            menor.push(e2);
-        }
-        else {
-            mayor.push(e2);
-        }
-        if (menor.size() < mayor.size()) {
-            menor.push(mayor.top());
-            mayor.pop();
-        }
-        else if (menor.size() > mayor.size() + 1) {
-            mayor.push(menor.top());
-            menor.pop();
-        }
-        resultado.push_back(menor.top());
-    }
-    // resolver el caso posiblemente llamando a otras funciones
-    for (int i : resultado) {
-        cout << i << " ";
-    }
-    cout << "\n";
-    // escribir la solución
+       }
+   }
 
-    return true;
+   // resolver el caso posiblemente llamando a otras funciones
+   
+   // escribir la solución
+
+   return true;
 }
 
 //@ </answer>
@@ -93,8 +82,8 @@ int main() {
 #endif
 
     // Resolvemos
-    while (resuelveCaso());
-
+    //while (resuelveCaso());
+    resuelveCaso();
     // para dejar todo como estaba al principio
 #ifndef DOMJUDGE
     std::cin.rdbuf(cinbuf);
