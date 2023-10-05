@@ -7,7 +7,7 @@
  /*@ <answer>
   *
   * MARP07 Dewei Chen
-  *
+  * 
   *
   *@ </answer> */
 
@@ -24,7 +24,7 @@ using namespace std;
 
 /*@ <answer>
 
-
+ 
  @ </answer> */
 
  // ================================================================
@@ -38,37 +38,37 @@ using namespace std;
 
 
 bool resuelveCaso() {
+   
+   // leer los datos de la entrada
+   int d,a,b;
+   cin >> d;
+   if (!std::cin)  // fin de la entrada
+      return false;
+   cin >> a >> b;
+   IndexPQ<int, greater<int>>pila9V(a);
+   IndexPQ<int, greater<int>>pila15V(b);
+   int horas;
+   for (int i = 0; i < a; i++) {
+       int h;
+       cin >> h;
+       pila9V.push(i, h);
+   }
+   for (int i = 0; i < b; i++) {
+       int h;
+       cin >> h;
+       pila15V.push(i, h);
+   }
+   for (int i = 0; i < d; i++) {
+       if (pila9V.top().prioridad > pila15V.top().prioridad) {
 
-    // leer los datos de la entrada
-    int d, a, b;
-    cin >> d;
-    if (!std::cin)  // fin de la entrada
-        return false;
-    cin >> a >> b;
-    IndexPQ<int, greater<int>>pila9V(a);
-    IndexPQ<int, greater<int>>pila15V(b);
-    int horas;
-    for (int i = 0; i < a; i++) {
-        int h;
-        cin >> h;
-        pila9V.push(i, h);
-    }
-    for (int i = 0; i < b; i++) {
-        int h;
-        cin >> h;
-        pila15V.push(i, h);
-    }
-    for (int i = 0; i < d; i++) {
-        if (pila9V.top().prioridad > pila15V.top().prioridad) {
+       }
+   }
 
-        }
-    }
+   // resolver el caso posiblemente llamando a otras funciones
+   
+   // escribir la solución
 
-    // resolver el caso posiblemente llamando a otras funciones
-
-    // escribir la solución
-
-    return true;
+   return true;
 }
 
 //@ </answer>

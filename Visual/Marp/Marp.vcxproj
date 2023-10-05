@@ -135,6 +135,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\bintree.h" />
+    <ClInclude Include="..\IndexPQ.h" />
     <ClInclude Include="..\PriorityQueue.h" />
     <ClInclude Include="..\TreeSet_AVL_tami.h" />
   </ItemGroup>
