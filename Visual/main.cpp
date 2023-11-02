@@ -1,71 +1,80 @@
-/*
- * MUY IMPORTANTE: Solo se corregirán los comentarios y el código
- * contenidos entre las etiquetas <answer> y </answer>.
- * Toda modificación fuera de esas etiquetas no será corregida.
- */
 
- /*@ <answer>
-  *
-  * MARP07 Dewei Chen
-  * 
-  *
-  *@ </answer> */
+/*@ <authors>
+ *
+ * Dewei Chen (MARP07)
+ *
+ *@ </authors> */
 
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include "Digrafo.h"
+#include <vector>
+#include "ConjuntosDisjuntos.h"
+#include "GrafoValorado.h"
+#include "PriorityQueue.h"
 using namespace std;
 
 
 /*@ <answer>
 
- El ejercicio se resuelve utilizando grafos dirigidos en la cual los vértices son las lineas del programa y las aristas unen la siguiente instrucción a ejecutar el programa.
- Se inicializa los vértices del digrafo a tamaño L (número de instrucciones) + 1 para saber si se ha llegado a detrás de la última instrucción.
- Si la instrucción es 'A': se une el vértice actual con la siguiente.
- Si la instrucción es 'J': se une el vértice actual con el salto de línea - 1 (El digrafo empieza con vértice 0).
- Si la instrucción es 'C': se une el vértice actual con la siguiente y se une el vértice actual con el salto de línea - 1 (El digrafo empieza con vértice 0).
- Utilizando una búsqueda en profundidad dfs , vamos obteniendo si cada instrucción es visitada o no , lo que nos importa realmente es si el vértice que está detras de la última instrucción ha
- sido visitada o no , que es el vértice L , si no ha sido visitido es que el programa NUNCA acaba , si ha sido visitado , tenemos dos opciones:
-    - Si no tuvo ningún ciclo , es que no se ha llegado al final pasando por una instrucción 'C' , por lo tanto acaba SIEMPRE.
-    - Si tuvo un ciclo , significa que ha acabado pasando por una instrucción 'C' , y como no se sabe lo que hace el 'C' por antelación, por lo tanto A VECES acaba.
+ La resolución del problema se plantea de la siguiente forma. Las condiciones son que necesitamos que el coche pueda circular libremente por la red,
+ esto significa que desde cualquier vértice tenga un camino que le haga llega a otra cualquiera, con la autonomía mínima significa que el coste o valor
+ de las aristas que va a recorrer sean lo menor posible.Estas condiciones coinciden con la definición de ARM , árboles de recubrimiento mínimo la cual es un
+ árbol que une todos los vértices medientate aristas de menor valor posible por lo tanto vamos a utilizar un tipo algoritmo de ARM ,Kruskal.
+
+ Se ordenan las aristas en una cola de prioridad de menor a mayor, se crea el conjunto disjunto.
+ Se saca el primer elemento de la cola y se obtiene sus dos vértices , si estaban unidos ya , significa que al unirlos crearía un ciclo y no es lo que 
+ queremos en un ARM , por lo tanto se salta a la siguiente iteración , si no estaban unidos , significa que es una arista con menor coste que une el nuevo
+ vértice , se unen y se comprueba números de aristas.El valor mínimo de la autonomía en este caso es el valor del último arista que se añade al ARM, como
+ no sabemos exactamente en que iteración la vamos sobreescribiendo en cada una de las iteraciones hasta llegar al final.
 
 
- El coste de la construcción del digrafo es de O(L) siendo L los números de instrucciones.
- El algoritmo dfs tiene un coste de O(V+A) número de vértices V=L+1 y números de aristas A = L la cual se recorre todos los vértices y todas las aristas pero solo una vez cada arista.
+ El coste de la construcción de la cola de prioridad es de O(A) siendo A las carreteras de la red.
+ El coste de la construcción del conjunto disjunto es de O(V) siendo V las ciudades.
  
- El coste total de la resolución del problema es del O(L+1 + L) siendo L+1 números de vértices del grafo dirigido y L números de aristas . L=números de instrucciones.
+ El bucle while itera como mucho A veces siendo A el número de aristas (las carreteras).
+ La operación pop tiene un coste de O(Log A) siendo A las carreteras
+ La operaciones unir y unidos tiene un coste de O(Ln* V) siendo V las ciudades , que es prácticamente constante.
+ Tener en cuenta que aunque las operaciones pop y unidos que puedan llamar A veces , la operación unir solo se llamará V-1 veces (lo necesario para 
+ construir un ARM).
+
+ El coste total del algoritmo de Kruskal es de O(A Log A) siendo A las aristas (o carreteras en este caso) teniendo en cuenta de que las construcciones
+ de la cola y el conjunto siempre se va a hacer una vez en el algoritmo.
 
  @ </answer> */
 
  // ================================================================
  // Escribe el código completo de tu solución aquí debajo (después de la marca)
  //@ <answer>
+class Kruskal {
+    int coste;
+    int aristas;
+public:
+    Kruskal(GrafoValorado<int> const& g) {
+        coste = 0;
+        aristas = 0;
+        PriorityQueue<Arista<int>>cola(g.aristas());
+        ConjuntosDisjuntos conjunto(g.V());
+        while (!cola.empty())
+        {
+            Arista<int> a = cola.top(); cola.pop();
+            int v = a.uno();
+            int w = a.otro(v);
 
-class Necronomicon {
-private:
-    vector<bool>visitado;
-    vector<bool>apilado;
-    bool ciclo=false;
-    void dfs(Digrafo const& g, int v) {
-        apilado[v] = true;
-        visitado[v] = true;
-        for (int w : g.ady(v)) {
-            if (!visitado[w]) dfs(g, w);
-            else if (apilado[w])ciclo = true;
+            if (!conjunto.unidos(v, w)) {
+                conjunto.unir(v, w);
+                coste = a.valor();
+                aristas++;
+                if (aristas == g.V() - 1)break;
+            }
 
         }
-        apilado[v] = false;
     }
-public:
-    Necronomicon(Digrafo const& g) : visitado(g.V()), apilado(g.V()) {
-        dfs(g, 0);
+    bool isArm(GrafoValorado<int> const& g) {
+        return aristas == g.V() - 1;
     }
-    bool visit(int v) {
-        return visitado[v];
-    }
-    bool ciclos() {
-        return ciclo;
+    int cost() {
+        return coste;
     }
 };
 
@@ -73,43 +82,27 @@ public:
 
 bool resuelveCaso() {
 
-    int L;
-    cin >> L;
+    // leemos la entrada
+    int N, M;
+    cin >> N >> M;
+
     if (!cin)
         return false;
-    Digrafo dg(L+1);
-    for (int i = 0; i < L; i++) {
-        char e;
-        int l;
-        cin >> e;
-        if (e == 'A') {
-            dg.ponArista(i, i + 1);
-        }
-        else if (e == 'J') {
-            cin >> l;
-            dg.ponArista(i, l-1);
-        }
-        else if (e == 'C') {
-            cin >> l;
-            dg.ponArista(i, i + 1);
-            dg.ponArista(i, l-1);
-        }
+    GrafoValorado<int> red(N);
+    for (int i = 0; i < M; i++) {
+        int a, b, v;
+        cin >> a >> b >> v;
+        red.ponArista({ a-1,b-1,v });
     }
-    Necronomicon micon(dg);
-    if (!micon.visit(L)) {
-        cout << "NUNCA\n";
-    }
-    else if (micon.ciclos() && micon.visit(L)) {
-        cout << "A VECES\n";
-    }
-    else {
-        cout << "SIEMPRE\n";
-    }
+    Kruskal sol(red);
+    if (!sol.isArm(red))cout << "IMPOSIBLE\n";
+    else
+        cout << sol.cost() << "\n";
     return true;
 }
 
 //@ </answer>
-//  Lo que se escriba dejado de esta línea ya no forma parte de la solución.
+//  Lo que se escriba debajo de esta línea ya no forma parte de la solución.
 
 int main() {
     // ajustes para que cin extraiga directamente de un fichero
