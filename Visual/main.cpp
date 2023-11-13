@@ -9,114 +9,121 @@
 #include <fstream>
 #include <algorithm>
 #include <vector>
-#include "ConjuntosDisjuntos.h"
-#include "GrafoValorado.h"
-#include "PriorityQueue.h"
+#include "DigrafoValorado.h"
+#include "IndexPQ.h"
 using namespace std;
 
 
 /*@ <answer>
 
- La resolución del problema se plantea de la siguiente forma. Las condiciones son que necesitamos que el coche pueda circular libremente por la red,
- esto significa que desde cualquier vértice tenga un camino que le haga llega a otra cualquiera, con la autonomía mínima significa que el coste o valor
- de las aristas que va a recorrer sean lo menor posible.Estas condiciones coinciden con la definición de ARM , árboles de recubrimiento mínimo la cual es un
- árbol que une todos los vértices medientate aristas de menor valor posible por lo tanto vamos a utilizar un tipo algoritmo de ARM ,Kruskal.
+ La solución se plantea de la forma de que se intenta buscar el camino que no supere la distancia máxima del zulo desde el origen
+ del pueblo de tiene un Borriquín, los pueblos que pertenezcan a ese camino son los posibles pueblos que puede estar Petunia ,ya que
+ la distancia al zulo es menor que la máxima que puede tener. Este es un problema que busca el camino mínimo en un grafo dirigido valorado
+ siendo los vértices los pueblos y las aristas, las carreteras que los unen. Por lo tanto se utiliza aqui el algoritmo de Dijkstra con 
+ algunas modificaciones para la resolución del problema. El algoritmo empieza , en vez de con un solo origen , con varios origenes de tamaño
+ B(números de pueblos con Borriquín), estas se añaden a la cola de prioridad con la prioridad máxima (0), esto hace que el algoritmo vaya
+ relajando aristas en el orden de , primero los origenes y luego los pueblos más cercanos a estos origenes , si al acabar el bucle , la distancia
+ del pueblo es menor al máximo , entonces esta es añadida al contador de pueblos.
 
- Se ordenan las aristas en una cola de prioridad de menor a mayor, se crea el conjunto disjunto.
- Se saca el primer elemento de la cola y se obtiene sus dos vértices , si estaban unidos ya , significa que al unirlos crearía un ciclo y no es lo que 
- queremos en un ARM , por lo tanto se salta a la siguiente iteración , si no estaban unidos , significa que es una arista con menor coste que une el nuevo
- vértice , se unen y se comprueba números de aristas.El valor mínimo de la autonomía en este caso es el valor del último arista que se añade al ARM, como
- no sabemos exactamente en que iteración la vamos sobreescribiendo en cada una de las iteraciones hasta llegar al final.
+ El coste de inicialización del vector dist y la cola de prioridad es de O(V) siendo V el número de pueblos.Estas se inicializa una única vez.
+ El coste de la operación pop es de O(log V) siendo V el número de pueblos , el bucle while se ejecuta como mucho V veces.
+ El coste de la operación update es de O(log V) siendo V el número de pueblos , el método relajar se ejecuta A veces siendo esto el número de 
+ carreteras, en este caso como son transitables en ambos sentidos , el número de carretera es 2*A.
 
+ El coste total del algoritmo de Dijkstra es de O(2A log V) siendo V el número de pueblos y 2A el número de carretera en ambos sentidos.
 
- El coste de la construcción de la cola de prioridad es de O(A) siendo A las carreteras de la red.
- El coste de la construcción del conjunto disjunto es de O(V) siendo V las ciudades.
- 
- El bucle while itera como mucho A veces siendo A el número de aristas (las carreteras).
- La operación pop tiene un coste de O(Log A) siendo A las carreteras
- La operaciones unir y unidos tiene un coste de O(Ln* V) siendo V las ciudades , que es prácticamente constante.
- Tener en cuenta que aunque las operaciones pop y unidos que puedan llamar A veces , la operación unir solo se llamará V-1 veces (lo necesario para 
- construir un ARM).
-
- El coste total del algoritmo de Kruskal es de O(A Log A) siendo A las aristas (o carreteras en este caso) teniendo en cuenta de que las construcciones
- de la cola y el conjunto siempre se va a hacer una vez en el algoritmo.
 
  @ </answer> */
 
- // ================================================================
- // Escribe el código completo de tu solución aquí debajo (después de la marca)
- //@ <answer>
-class Kruskal {
-    int coste;
-    int aristas;
-public:
-    Kruskal(GrafoValorado<int> const& g) {
-        coste = 0;
-        aristas = 0;
-        PriorityQueue<Arista<int>>cola(g.aristas());
-        ConjuntosDisjuntos conjunto(g.V());
-        while (!cola.empty())
-        {
-            Arista<int> a = cola.top(); cola.pop();
-            int v = a.uno();
-            int w = a.otro(v);
+// ================================================================
+// Escribe el código completo de tu solución aquí debajo (después de la marca)
+//@ <answer>
 
-            if (!conjunto.unidos(v, w)) {
-                conjunto.unir(v, w);
-                coste = a.valor();
-                aristas++;
-                if (aristas == g.V() - 1)break;
-            }
+class Dijkstra {
+private:
+    const int INF = std::numeric_limits<int>::max();
+    std::vector<int> dist;
+    IndexPQ<int> pq;
+    int count = 0;
 
+    void relajar(AristaDirigida<int> a) {
+        int v = a.desde(), w = a.hasta();
+        if (dist[w] > dist[v] + a.valor()) {
+            dist[w] = dist[v] + a.valor(); 
+            pq.update(w, dist[w]);
         }
     }
-    bool isArm(GrafoValorado<int> const& g) {
-        return aristas == g.V() - 1;
+public:
+    Dijkstra(DigrafoValorado<int> const& g, 
+    int D,vector<int>origenes) :
+        dist(g.V(), INF), pq(g.V()) {
+        for (int i = 0; i < origenes.size(); i++) {
+            dist[origenes[i]] = 0;
+            pq.push(origenes[i], 0);
+        }
+        while (!pq.empty()) {
+            int v = pq.top().elem; pq.pop();
+            for (auto a : g.ady(v))
+                relajar(a); 
+            if (dist[v] <= D) {
+                count++;
+            }
+        }
     }
-    int cost() {
-        return coste;
-    }
+    int getCount() { return count; }
 };
 
 
-
 bool resuelveCaso() {
+  
+  // leemos la entrada
+  int D, P, C;
+  cin >> D >> P >> C;
+  
+  if (!cin)
+    return false;
+  DigrafoValorado<int> g(P);
+  for (int i = 0; i < C; i++) {
+      int po, pd, d;
+      cin >> po >> pd >> d;
+      g.ponArista({ po - 1,pd - 1,d });
+      g.ponArista({ pd - 1,po - 1,d });
+  }
+  int B;
+  cin >> B;
+  vector<int>origenes;
+  for (int i = 0; i < B; i++) {
+      int b;
+      cin >> b;
+      origenes.push_back(b-1);
+  }
 
-    // leemos la entrada
-    int N, M;
-    cin >> N >> M;
-
-    if (!cin)
-        return false;
-    GrafoValorado<int> red(N);
-    for (int i = 0; i < M; i++) {
-        int a, b, v;
-        cin >> a >> b >> v;
-        red.ponArista({ a-1,b-1,v });
-    }
-    Kruskal sol(red);
-    if (!sol.isArm(red))cout << "IMPOSIBLE\n";
-    else
-        cout << sol.cost() << "\n";
-    return true;
+  Dijkstra dj(g, D,origenes);
+  cout << dj.getCount() << endl;
+  // leer el resto del caso y resolverlo
+  
+  
+  
+  
+  return true;
 }
 
 //@ </answer>
 //  Lo que se escriba debajo de esta línea ya no forma parte de la solución.
 
 int main() {
-    // ajustes para que cin extraiga directamente de un fichero
+  // ajustes para que cin extraiga directamente de un fichero
 #ifndef DOMJUDGE
-    std::ifstream in("casos.txt");
-    auto cinbuf = std::cin.rdbuf(in.rdbuf());
+  std::ifstream in("casos.txt");
+  auto cinbuf = std::cin.rdbuf(in.rdbuf());
 #endif
-
-    // Resolvemos
-    while (resuelveCaso());
-
-    // para dejar todo como estaba al principio
+  
+  // Resolvemos
+  while (resuelveCaso());
+  
+  // para dejar todo como estaba al principio
 #ifndef DOMJUDGE
-    std::cin.rdbuf(cinbuf);
+  std::cin.rdbuf(cinbuf);
 #endif
-    return 0;
+  return 0;
 }
