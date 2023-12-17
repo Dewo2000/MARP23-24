@@ -1,8 +1,6 @@
-30 7 6
-1 2 10
-2 3 35
-3 4 40
-4 5 5
-1 6 15
-6 7 20
-2 1 5
+One Respect Bohemian_rapsody One Volando_voy Caruso
+Respect One Volando_voy La_vie_en_rose Bohemian_rapsody
+Despacito Fiesta_pagana
+Grandola_Vila_Morena
+Yesterday Macarena Mocatriz Buleria Saoko Alejandro Thriller
+Macarena Buleria Columbia Pa_tipos_como_tu Thriller Bizcochito

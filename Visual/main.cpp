@@ -9,121 +9,111 @@
 #include <fstream>
 #include <algorithm>
 #include <vector>
-#include "DigrafoValorado.h"
-#include "IndexPQ.h"
+#include <string>
+#include <sstream>
+#include "Matriz.h"
+#include <deque>
 using namespace std;
 
 
 /*@ <answer>
 
- La solución se plantea de la forma de que se intenta buscar el camino que no supere la distancia máxima del zulo desde el origen
- del pueblo de tiene un Borriquín, los pueblos que pertenezcan a ese camino son los posibles pueblos que puede estar Petunia ,ya que
- la distancia al zulo es menor que la máxima que puede tener. Este es un problema que busca el camino mínimo en un grafo dirigido valorado
- siendo los vértices los pueblos y las aristas, las carreteras que los unen. Por lo tanto se utiliza aqui el algoritmo de Dijkstra con 
- algunas modificaciones para la resolución del problema. El algoritmo empieza , en vez de con un solo origen , con varios origenes de tamaño
- B(números de pueblos con Borriquín), estas se añaden a la cola de prioridad con la prioridad máxima (0), esto hace que el algoritmo vaya
- relajando aristas en el orden de , primero los origenes y luego los pueblos más cercanos a estos origenes , si al acabar el bucle , la distancia
- del pueblo es menor al máximo , entonces esta es añadida al contador de pueblos.
+ Resolvemos el problema mediante programación dinámica ascendente basándonos en la siguiente recurrencia:
+ listaComun(i,j) = número máximos de canciones en común utilizando i elementos de la lista1 (mañana) y j elementos de la lista2(tarde)
+ Casos recursivos:
+ Si la canción de ambas listas coinciden ,se añade
+ listaComun(i,j) = listaComun(i - 1)(j - 1) + 1 si lista1(i-1)==lista2(j-1)
+ En caso contrario se busca el máximo quitando una cancion en la lista1 o lista2.
+ listaComun(i,j) = max(listaComun(i - 1,j),listaComun(i,j-1)) en otro caso.
 
- El coste de inicialización del vector dist y la cola de prioridad es de O(V) siendo V el número de pueblos.Estas se inicializa una única vez.
- El coste de la operación pop es de O(log V) siendo V el número de pueblos , el bucle while se ejecuta como mucho V veces.
- El coste de la operación update es de O(log V) siendo V el número de pueblos , el método relajar se ejecuta A veces siendo esto el número de 
- carreteras, en este caso como son transitables en ambos sentidos , el número de carretera es 2*A.
-
- El coste total del algoritmo de Dijkstra es de O(2A log V) siendo V el número de pueblos y 2A el número de carretera en ambos sentidos.
-
+ La matriz se inicializa a -1 y se va rellenando de arriba a abajo , de izquierda a derecha.
+ La complejidad en tiempo está en O(m*t) siendo m el tamaño de la lista1 y t el tamaño de la lista2 ya que recorre la matriz entera para rellenar 
+ cada subproblema y cada uno con un coste constante.
+ La complejidad en espacio también está en O(m*t) y no es posible reducir debido a la necesidad de reconstruir la solución.
+ La complejidad del reconstruir está en el O(max(m,t)).
+ 
 
  @ </answer> */
 
-// ================================================================
-// Escribe el código completo de tu solución aquí debajo (después de la marca)
-//@ <answer>
+ // ================================================================
+ // Escribe el código completo de tu solución aquí debajo (después de la marca)
+ //@ <answer>
 
-class Dijkstra {
-private:
-    const int INF = std::numeric_limits<int>::max();
-    std::vector<int> dist;
-    IndexPQ<int> pq;
-    int count = 0;
+vector<string> leerLista() {
+    string linea;
+    getline(cin, linea);
+    if (!cin)
+        return {};
+    vector<string> sec;
+    stringstream ss(linea);
+    string pal;
+    while (ss >> pal)
+        sec.push_back(pal);
+    return sec;
+}
 
-    void relajar(AristaDirigida<int> a) {
-        int v = a.desde(), w = a.hasta();
-        if (dist[w] > dist[v] + a.valor()) {
-            dist[w] = dist[v] + a.valor(); 
-            pq.update(w, dist[w]);
+void reconstruir(vector<string> const& lista1, vector<string> const& lista2, Matriz<int> const& listaComun, int i, int j, deque<string> &sol) {
+    if (i > 0 && j > 0) {
+        if (lista1[i - 1] == lista2[j - 1]) {
+            sol.push_front(lista1[i - 1]);
+            reconstruir(lista1, lista2, listaComun, i - 1, j - 1, sol);
         }
+        else if (listaComun[i - 1][j] > listaComun[i][j - 1]) {
+            reconstruir(lista1, lista2, listaComun, i - 1, j, sol);
+        }
+        else
+            reconstruir(lista1, lista2, listaComun, i, j-1, sol);
     }
-public:
-    Dijkstra(DigrafoValorado<int> const& g, 
-    int D,vector<int>origenes) :
-        dist(g.V(), INF), pq(g.V()) {
-        for (int i = 0; i < origenes.size(); i++) {
-            dist[origenes[i]] = 0;
-            pq.push(origenes[i], 0);
-        }
-        while (!pq.empty()) {
-            int v = pq.top().elem; pq.pop();
-            for (auto a : g.ady(v))
-                relajar(a); 
-            if (dist[v] <= D) {
-                count++;
+}
+
+bool resuelveCaso() {
+
+    // leemos la entrada
+    auto lista1 = leerLista();
+    if (!cin)
+        return false;
+    auto lista2 = leerLista();
+    int m = lista1.size();
+    int t = lista2.size();
+    // resolver el caso
+    Matriz<int>listaComun(m + 1, t + 1, -1);
+    for (int i = 1; i <= m; i++) {
+        for (int j = 1; j <= t; j++) {
+            if (lista1[i - 1] == lista2[j - 1]) {
+                listaComun[i][j] = listaComun[i - 1][j - 1] + 1;
+            }
+            else {
+                listaComun[i][j] = max(listaComun[i - 1][j], listaComun[i][j - 1]);
             }
         }
     }
-    int getCount() { return count; }
-};
+    deque<string>sol;
+    reconstruir(lista1, lista2, listaComun, m, t, sol);
+    for (int i = 0; i < sol.size(); i++) {
+        cout << sol[i] << " ";
+    }
+    cout << "\n";
 
 
-bool resuelveCaso() {
-  
-  // leemos la entrada
-  int D, P, C;
-  cin >> D >> P >> C;
-  
-  if (!cin)
-    return false;
-  DigrafoValorado<int> g(P);
-  for (int i = 0; i < C; i++) {
-      int po, pd, d;
-      cin >> po >> pd >> d;
-      g.ponArista({ po - 1,pd - 1,d });
-      g.ponArista({ pd - 1,po - 1,d });
-  }
-  int B;
-  cin >> B;
-  vector<int>origenes;
-  for (int i = 0; i < B; i++) {
-      int b;
-      cin >> b;
-      origenes.push_back(b-1);
-  }
-
-  Dijkstra dj(g, D,origenes);
-  cout << dj.getCount() << endl;
-  // leer el resto del caso y resolverlo
-  
-  
-  
-  
-  return true;
+    return true;
 }
 
 //@ </answer>
 //  Lo que se escriba debajo de esta línea ya no forma parte de la solución.
 
 int main() {
-  // ajustes para que cin extraiga directamente de un fichero
+    // ajustes para que cin extraiga directamente de un fichero
 #ifndef DOMJUDGE
-  std::ifstream in("casos.txt");
-  auto cinbuf = std::cin.rdbuf(in.rdbuf());
+    std::ifstream in("casos.txt");
+    auto cinbuf = std::cin.rdbuf(in.rdbuf());
 #endif
-  
-  // Resolvemos
-  while (resuelveCaso());
-  
-  // para dejar todo como estaba al principio
+
+    // Resolvemos
+    while (resuelveCaso());
+
+    // para dejar todo como estaba al principio
 #ifndef DOMJUDGE
-  std::cin.rdbuf(cinbuf);
+    std::cin.rdbuf(cinbuf);
 #endif
-  return 0;
+    return 0;
 }
